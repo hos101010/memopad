@@ -5,10 +5,14 @@ import './App.css';
 class App extends Component {
   constructor(props) {
     super(props);
+    
+    var existingNotesData = localStorage.getItem('notes');  //componentDidUpdate()하고 localStorage에 저장되어있는거 변수에 넣어줌
     this.state = {
       notebookName: '리액트 노트북',
       mode: 'VIEW',
-      notes: [
+      notes: existingNotesData
+        ? JSON.parse(existingNotesData) //existingNotesData가 있으면 표시 없으면 밑으로
+        : [
         { title: '안녕하세요, 노트를 적자...',
           content: '노트는 이렇게 적는다...' },
         { title: '안녕하세요, 노트를 적자...2',
@@ -19,6 +23,9 @@ class App extends Component {
     };
   }
 
+  componentDidUpdate(){ //component가 변경이 있을 때마다 호출 (setState할때마다)
+    localStorage.setItem('notes', JSON.stringify(this.state.notes));  //새 노트 추가하면(상태변경하면/원래있던거 클릭하면) localstorage에서 확인 가능 ->새로고침해도 그대로
+  }
   
   insertNote() {
     var notes = this.state.notes;
@@ -33,6 +40,18 @@ class App extends Component {
       activeNoteIndex: newNoteIndex,
       mode: 'EDIT'
     });
+  }
+  
+  deleteNote(){
+    var notes = this.state.notes;
+    delete notes[this.state.activeNoteIndex]; //delete쓰면 그 자리는 undefined로 남아있음 -> filter사용 ( [5,4,3,2,1].filter(number => number>2) 하면 345만 들어감 map이랑 다름
+    notes - notes.filter(item => item !== undefined); //undefined삭제됨
+    
+    this.setState({
+      notes: notes,
+      activeNoteIndex: null,  //delete하면 activeNoteIndex는 없는걸로..열려있는 노트 없음
+    })
+    //노트 선택하고 react에서 $r.deleteNote()하면 삭제됨
   }
   
   openNote(index) {
@@ -127,6 +146,12 @@ class App extends Component {
                             onClick={() => this.switchToEditMode()}
                         >
                           수정
+                        </button>
+                        
+                        <button className="btn btn-default pull-right"
+                            onClick={() => this.deleteNote()}
+                        >
+                          삭제
                         </button>
                         <h2>{activeNote.title}</h2>
                       </div>
